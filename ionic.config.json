@@ -1,0 +1,7 @@
+{
+  "name": "trabalho-firestore",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue"
+}

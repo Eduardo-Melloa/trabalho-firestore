@@ -1,0 +1,6 @@
+{
+	"appId": "io.ionic.starter",
+	"appName": "trabalho-firestore",
+	"webDir": "dist",
+	"bundledWebRuntime": false
+}
