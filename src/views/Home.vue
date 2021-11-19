@@ -1,4 +1,6 @@
 <template>
+  <link rel="stylesheet" href="https://kit.fontawesome.com/d33fe072ff.js" >
+
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
@@ -14,15 +16,34 @@
       </ion-header>
     
       <div id="container">
-        
+        <div>
+          <ion-input type='text' placeholder="Descricao" v-model="lanche.descricao"></ion-input>
+          <ion-input type='number' placeholder="Preco" v-model="lanche.preco"></ion-input>
+          <ion-button @click="salvar">Salvar Lanche</ion-button>
+          <div style="font-size:30px; text-align:center;">CARDÁPIO</div> 
+        </div>
+
+
+        <ion-grid >
+          <ion-row class="ion-allign-items-center" v-for="lanche in lista" :key="lanche.id"> 
+            <ion-col style="text-align: left">R${{lanche.preco}}</ion-col>
+            <ion-col style="background: lightblue;border-radius:4px">{{lanche.descricao}}</ion-col>
+            <ion-col size="2"><ion-button color="warning" @click="editar(lanche.id)">Edit</ion-button></ion-col>
+            <ion-col size="2"><ion-button color="danger" @click="apagar(lanche.id)">X</ion-button></ion-col>
+
+          </ion-row>
+        </ion-grid>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
-<script lang="ts">
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+<script>
+
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonInput } from '@ionic/vue';
 import { defineComponent } from 'vue';
+import { collection, getDocs, addDoc, doc, deleteDoc, setDoc } from "firebase/firestore";
+import { db } from '../firebase';
 
 export default defineComponent({
   name: 'Home',
@@ -31,37 +52,75 @@ export default defineComponent({
     IonHeader,
     IonPage,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonButton,
+    IonInput
+  },
+  data(){
+    return {
+      lanche: {},
+      lista : []
+    }
+  },
+  created: async function(){
+    const querySnapshot = await getDocs(collection(db, 'lanches'));
+    querySnapshot.forEach((doc) => {
+      const lanche = { id: doc.id, ...doc.data() };
+      this.lista.push(lanche);
+    });
+  },
+  methods: {
+    atualizar: async function(){
+      this.lista = [];
+      this.lanche = {};
+      const querySnapshot = await getDocs(collection(db, 'lanches'));
+      querySnapshot.forEach((doc) => {
+        const lanche = { id: doc.id, ...doc.data() };
+        this.lista.push(lanche);
+      });
+    },
+    salvar: async function(){
+      try {
+        if(this.lanche.id) {
+          const lanche = {...this.lanche};
+          delete(lanche.id);
+          await setDoc(doc(db, 'lanches', this.lanche.id), this.lanche);
+        }else{
+          const docRef = await addDoc(collection(db, 'lanches'), this.lanche);
+          console.log("Document written with ID: ", docRef.id);
+        }
+        this.atualizar();
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+    },
+    apagar: async function(id){
+      await deleteDoc(doc(db, 'lanches', id));
+      this.atualizar();
+    },
+    editar: async function(id){
+      const lanche = this.lista.find( (item) => item.id == id );
+      this.lanche = { ...lanche};
+    }
   }
 });
 </script>
 
 <style scoped>
 #container {
-  text-align: center;
-  
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  text-align: start;
+  margin: 30px;
 }
-
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+ion-input {
+  border: groove 2px darkblue;
+  border-radius: 4px;
+  background: lightblue;
 }
-
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-  
-  color: #8c8c8c;
-  
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
+ion-grid {
+  border: dotted 2px darkblue;
+  border-radius: 4px;
 }
 </style>
